@@ -31,3 +31,5 @@ generateSpherePlot(numStars, seed) creates a field of what the sphere of the sky
     • seed is the seed used to generate the random location of the stars, as well as the galactic disk. (Note that the same seed will produce the same sky for both of the two functions.)
 A valid usage, for example, is
    > fakesky.generateSpherePlot(100000, "sphereplot.png", 1)
+   
+Thanks to Jan-Vincent Harre and René Heller for figuring otu the colors of these stars. (See Harre et al. (2020) for more details.)
