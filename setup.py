@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='fakesky',
-    version='1.0',
+    version='1.0.1',
     license='CC0 1.0',
     author="Drew Weisserman",
     author_email='drewweis@umich.edu',
