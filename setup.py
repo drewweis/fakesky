@@ -12,7 +12,6 @@ setup(
     keywords='sky image',
     install_requires=[
         'matplotlib',
-        'mpl_toolkits',
         'numpy',
         'pandas',
         'scipy',
