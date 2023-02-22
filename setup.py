@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='fakesky',
-    version='1.0.16',
+    version='1.1.0',
     license='CC0 1.0',
     author="Drew Weisserman",
     author_email='drewweis@umich.edu',
@@ -15,7 +15,8 @@ setup(
         'numpy',
         'pandas',
         'scipy',
-        'astropy'
+        'astropy',
+        'imageio'
       ],
 
 )
