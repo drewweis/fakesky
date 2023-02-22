@@ -4,7 +4,7 @@ import mpl_toolkits.mplot3d.axes3d as axes3d
 
 import numpy as np
 import pandas as pd
-import scipy
+import scipy.stats
 
 from astropy import units as u
 from astropy.time import Time
@@ -12,6 +12,8 @@ from astropy.coordinates import SkyCoord, EarthLocation
 from astropy.coordinates import AltAz
 
 from io import StringIO
+import os
+import imageio
 
 # The goal of this code is to randomly generate a starfield in the sky, and have it dynamically move over time and given a position!
 
@@ -176,20 +178,12 @@ class skyField:
     # Let's write a function to plot the stars on a 3D mesh, to test.
     def plotStars(self, filename):
         r = 1.001
-        theta = (360. / 24.) * (np.pi / 180.) * self.RA
-        phi = (np.pi / 180.) * (90. - self.Decs)
+        theta = (360. / 24.) * (np.pi / 180.) * np.append(self.RA, self.DiskRA, axis = 0)
+        phi = (np.pi / 180.) * (90. - np.append(self.Decs, self.DiskDecs, axis = 0))
         
         self.x = r * np.sin(phi) * np.cos(theta)
         self.y = r * np.sin(phi) * np.sin(theta)
         self.z = r * np.cos(phi)
-        
-        # And plot the disk
-        dtheta = (360. / 24.) * (np.pi / 180.) * self.DiskRA
-        dphi = (np.pi / 180.) * (90. - self.DiskDecs)
-        
-        self.dx = r * np.sin(dphi) * np.cos(dtheta)
-        self.dy = r * np.sin(dphi) * np.sin(dtheta)
-        self.dz = r * np.cos(dphi)
         
         # And let's make the sphere
         sphi, stheta = np.mgrid[0.0:np.pi:100j, 0.0:2.0*np.pi:100j]
@@ -197,12 +191,16 @@ class skyField:
         sy = 1.0 * np.sin(sphi) * np.sin(stheta)
         sz = 1.0 * np.cos(sphi)
         
-        fig = plt.figure(figsize = (12, 12), dpi = 600)
+        bss = np.append(self.backgroundBrightnesses, self.diskBrightnesses, axis = 0)
+        plotIdxs = bss > np.percentile(bss, 0.9)
+        
+        fig = plt.figure(figsize = (10, 10), dpi = 300)
         ax = fig.add_subplot(111, projection='3d')
         ax.plot_surface(sx, sy, sz, rstride = 1, cstride = 1, color = 'black', alpha = 0.75, linewidth = 0)
-        ax.scatter(self.x, self.y, self.z, c = self.backgroundColors, s = self.backgroundSizes, alpha = self.backgroundBrightnesses)
-        ax.scatter(self.dx, self.dy, self.dz, c = self.diskColors, s = self.diskSizes, alpha = self.diskBrightnesses)
-#         ax.scatter(self.dx, self.dy, self.dz, c = "blue", s = self.diskSizes, alpha = self.diskBrightnesses)
+        ax.scatter(self.x[plotIdxs], self.y[plotIdxs], self.z[plotIdxs],
+                   c = np.append(self.backgroundColors, self.diskColors, axis = 0)[plotIdxs],
+                   s = np.append(self.backgroundSizes, self.diskSizes, axis = 0)[plotIdxs],
+                   alpha = np.append(self.backgroundBrightnesses, self.diskBrightnesses, axis = 0)[plotIdxs])
         
         ax.set_xlim([-1,1])
         ax.set_ylim([-1,1])
@@ -212,6 +210,7 @@ class skyField:
         ax.set_zlabel("Z")
         ax.set_aspect("equal")
         plt.tight_layout()
+        # plt.show()
         fig.savefig(filename)
         
     # This should store the altitude and azimuth of each star, given a latitude, longitude, and location (and possibly a height)!
@@ -243,7 +242,7 @@ class skyField:
         self.backgroundUpIndexes = self.backgroundAlt > 0.
         self.diskUpIndexes = self.diskAlt > 0.
         
-        fig, ax = plt.subplots(subplot_kw={'projection': 'polar'}, figsize = (12, 12), dpi = 600)
+        fig, ax = plt.subplots(subplot_kw={'projection': 'polar'}, figsize = (10, 10), dpi = 300)
         ax.tick_params(grid_alpha = 0.175)
         ax.set_rlim(0,90)
 
@@ -267,11 +266,45 @@ class skyField:
 #                         s = self.diskSizes[self.diskUpIndexes],
 #                         alpha = 1)
         fig.savefig(filename)
+        fig.clf()
+        plt.close()
 #         plt.show()
+
+    
+    # Let's create a frame.
+    def createFrame(self, latitude, longitude, time, filename):
+            self.plotSky(latitude, longitude, time, filename.split('.')[0] + "_" + time.replace(":","-") + ".png")
+
+    # This should generate an animation you can see!
+    def createAnimation(self, latitude, longitude, times, filename):
+        # Let's write a function for each frame.
+        
+        frames = []
+        for time in times:
+            self.createFrame(latitude, longitude, time, filename)
+        for time in times:
+            image = imageio.v2.imread(filename.split('.')[0] + "_" + time.replace(":","-") + ".png")
+            frames.append(image)
+            os.remove(filename.split('.')[0] + "_" + time.replace(":","-") + ".png")
+        imageio.mimsave(filename, frames, fps = 5)
+            
         
     
-def generateSkyfield(numStars, latitude, longitude, time, filename, seed):
+def generateImage(numStars, latitude, longitude, time, filename, seed):
     skyField(numStars, seed).plotSky(latitude, longitude, time, filename)
     
 def generateSpherePlot(numStars, filename, seed):
     skyField(numStars, seed).plotStars(filename)
+    
+def generateAnimation(numStars, latitude, longitude, times, filename, seed):
+    skyField(numStars, seed).createAnimation(latitude, longitude, times, filename)
+    
+# Some tests:
+# generateImage(250000, "47.50", "-122.43", "2023-02-22 22:00:00", "skyfield1.png", 1)
+# generateSpherePlot(250000, "skyfield1.png", 1)
+# generateAnimation(250000, "47.50", "-122.43",
+#                   ["2023-02-22 22:00:00",
+#                    "2023-02-22 23:00:00",
+#                    "2023-02-23 0:00:00",
+#                    "2023-02-23 1:00:00",
+#                    "2023-02-23 2:00:00"], "skyfield.gif", 1)
