@@ -37,4 +37,4 @@ generateSpherePlot(numStars, seed) creates a field of what the sphere of the sky
 A valid usage, for example, is
    > fieldgen.generateSpherePlot(100000, "sphereplot.png", 1)
    
-Thanks to Jan-Vincent Harre and René Heller for figuring otu the colors of these stars. (See Harre et al. (2020) for more details.)
+Thanks to Jan-Vincent Harre and René Heller for figuring out the colors of these stars. (See Harre et al. (2020) for more details.)
