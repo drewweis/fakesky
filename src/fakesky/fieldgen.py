@@ -244,6 +244,7 @@ class skyField:
         self.diskUpIndexes = self.diskAlt > 0.
         
         fig, ax = plt.subplots(subplot_kw={'projection': 'polar'}, figsize = (12, 12), dpi = 600)
+        ax.tick_params(grid_alpha = 0.175)
         ax.set_rlim(0,90)
 
         bkg = plt.Circle((0, 0), 90., transform = ax.transData._b, color = 'black')
